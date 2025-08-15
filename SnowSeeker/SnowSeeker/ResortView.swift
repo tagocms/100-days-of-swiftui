@@ -1,0 +1,96 @@
+//
+//  ResortView.swift
+//  SnowSeeker
+//
+//  Created by Tiago Camargo Maciel dos Santos on 12/08/25.
+//
+
+import SwiftUI
+
+struct ResortView: View {
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    @Environment(\.dynamicTypeSize) var dynamicTypeSize
+    let resort: Resort
+    @Environment(Favorites.self) var favorites
+    
+    @State private var selectedFacility: Facility?
+    @State private var showingFacility = false
+    
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                
+                ZStack(alignment: .bottomTrailing) {
+                    Image(resort.id)
+                        .resizable()
+                        .scaledToFit()
+                    
+                    Text("Image by \(resort.imageCredit)")
+                        .padding(.horizontal)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(.black.opacity(0.7))
+                        )
+                        .foregroundStyle(.white)
+                        .font(.caption)
+                }
+                
+                HStack {
+                    if horizontalSizeClass == .compact && dynamicTypeSize > .large {
+                        VStack(spacing: 10) { ResortDetailsView(resort: resort) }
+                        VStack(spacing: 10) { SkiDetailsView(resort: resort) }
+                    } else {
+                        ResortDetailsView(resort: resort)
+                        SkiDetailsView(resort: resort)
+                    }
+                    
+                }
+                .padding(.vertical)
+                .background(.primary.opacity(0.1))
+                
+                Group {
+                    Text(resort.description)
+                        .padding(.vertical)
+                    
+                    Text("Facilities")
+                        .font(.headline)
+                    
+                    HStack {
+                        ForEach(resort.facilityTypes) { facility in
+                            Button {
+                                selectedFacility = facility
+                                showingFacility = true
+                            } label: {
+                                facility.icon
+                                    .font(.title)
+                            }
+                        }
+                    }
+                    .padding(.vertical)
+                    
+                    Button(favorites.contains(resort) ? "Remove from Favorites" : "Add to Favorites") {
+                        withAnimation {
+                            if favorites.contains(resort) {
+                                favorites.remove(resort)
+                            } else {
+                                favorites.add(resort)
+                            }
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .padding(.horizontal)
+            }
+        }
+        .navigationTitle("\(resort.name), \(resort.country)")
+        .navigationBarTitleDisplayMode(.inline)
+        .alert(selectedFacility?.name ?? "More information", isPresented: $showingFacility, presenting: selectedFacility) { _ in } message: { facility in
+            Text(facility.description)
+        }
+    }
+}
+
+#Preview {
+    ResortView(resort: .example)
+        .environment(Favorites())
+}
